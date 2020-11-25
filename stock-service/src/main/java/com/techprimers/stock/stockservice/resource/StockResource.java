@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import com.techprimers.stock.stockservice.config.Config;
+import com.techprimers.stock.stockservice.config.JSONStock;
+import com.techprimers.stock.stockservice.config.Quote;
+
 import yahoofinance.Stock;
 import yahoofinance.YahooFinance;
 
@@ -20,14 +25,15 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/rest/stock")
 public class StockResource {
-
+    
     @Autowired
-    RestTemplate restTemplate;
+    Config config;
 
     @GetMapping("/{username}")
     public List<Quote> getStock(@PathVariable("username") final String userName) {
 
-        ResponseEntity<List<String>> quoteResponse = restTemplate.exchange("http://db-service/rest/db/" + userName, HttpMethod.GET,
+        ResponseEntity<List<String>> quoteResponse = config.restTemplate().exchange("http://db-service/rest/db/" + userName, 
+        		HttpMethod.GET,
                 null, new ParameterizedTypeReference<List<String>>() {
                 });
 
@@ -36,44 +42,27 @@ public class StockResource {
         return quotes
                 .stream()
                 .map(quote -> {
-                    Stock stock = getStockPrice(quote);
-                    return new Quote(quote, stock.getQuote().getPrice());
+                    Quote stock = JSONStock.parseStockPrice(quote);
+                	
+                    /*ResponseEntity<String> stockResponse = restTemplate.exchange("https://www.worldtradingdata.com/api/v1/stock?"
+        					+ "symbol="+stock+"&"
+        					+ "api_token=7tZfaVPDpUmFAveR1uMvRUTvSLDvbfikLVIWuH6bAvUZzDuMiv2j6EVPP9qe", 
+                    		HttpMethod.GET,
+                            null, new ParameterizedTypeReference<String>() {
+                            });
+                    
+                    stock = JSONStock.parseStockPrice(stockResponse.getBody());*/
+                    
+                    return stock; //Hardcoded for now
+                    //return stockResponse;
                 })
                 .collect(Collectors.toList());
     }
 
-    private Stock getStockPrice(String quote) {
-        try {
-            return YahooFinance.get(quote);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new Stock(quote);
-        }
-    }
+	/*
+	 * private Stock getStockPrice(String quote) { try { return
+	 * YahooFinance.get(quote); } catch (IOException e) { e.printStackTrace();
+	 * return new Stock(quote); } }
+	 */
 
-    private class Quote {
-        private String quote;
-        private BigDecimal price;
-
-        public Quote(String quote, BigDecimal price) {
-            this.quote = quote;
-            this.price = price;
-        }
-
-        public String getQuote() {
-            return quote;
-        }
-
-        public void setQuote(String quote) {
-            this.quote = quote;
-        }
-
-        public BigDecimal getPrice() {
-            return price;
-        }
-
-        public void setPrice(BigDecimal price) {
-            this.price = price;
-        }
-    }
 }

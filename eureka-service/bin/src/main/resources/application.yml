@@ -14,7 +14,7 @@ eureka:
 
 zuul:
   #Service will be mapped under the /api URI
-  prefix: /api-gwy
+  prefix: /api
   routes:
     db-service:
       path: /db-service/**
