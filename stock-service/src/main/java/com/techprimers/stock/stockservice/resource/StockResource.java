@@ -58,6 +58,11 @@ public class StockResource {
                 })
                 .collect(Collectors.toList());
     }
+    
+    @GetMapping("/hello")
+	public String getResponseFromDocker() {
+		return "Hello from Stock Service";
+	}
 
 	/*
 	 * private Stock getStockPrice(String quote) { try { return
